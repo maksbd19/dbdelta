@@ -1,0 +1,38 @@
+{
+  "SK33bipa4": {
+    "name": "local",
+    "id": "SK33bipa4",
+    "driver": "mysql",
+    "host": "localhost",
+    "user": "root",
+    "pass": "root",
+    "db": "carbanglaweb"
+  },
+  "BokXmqLdh": {
+    "name": "prod",
+    "id": "BokXmqLdh",
+    "driver": "mysql",
+    "host": "carbangla-prod-rds-mysql-5-7-23.cvhopepqi3on.ap-southeast-1.rds.amazonaws.com",
+    "user": "CaRbanGLa_ProD",
+    "pass": "6s+8E>7q1_C4WeZ5",
+    "db": "carbanglaweb_prod_db"
+  },
+  "MqAe5SGJE": {
+    "name": "dev",
+    "id": "MqAe5SGJE",
+    "driver": "mysql",
+    "host": "carbangla-dev-rds-mysql-5-7-23.cvhopepqi3on.ap-southeast-1.rds.amazonaws.com",
+    "user": "cArBanGla_dEv",
+    "pass": "k2SM>rT8f_q0b!2A9",
+    "db": "carbanglaweb_dev_db"
+  },
+  "ldmVap62u": {
+    "name": "lll",
+    "id": "ldmVap62u",
+    "driver": "mysql",
+    "host": "localhost",
+    "user": "root",
+    "pass": "root",
+    "db": "cb"
+  }
+}

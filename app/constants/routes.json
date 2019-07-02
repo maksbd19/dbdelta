@@ -1,0 +1,7 @@
+{
+  "HOME": "/",
+  "CONNECTIONS_LIST": "/connections",
+  "CONNECTIONS_CREATE": "/connections/create",
+  "CONNECTIONS_EDIT": "/connections/edit/:id",
+  "CONNECTIONS_DELETE": "/connections/delete/:id"
+}
