@@ -114,51 +114,6 @@ $ yarn test-e2e
 DEBUG_PROD=true yarn package
 ```
 
-## CSS Modules
-
-This boilerplate is configured to use [css-modules](https://github.com/css-modules/css-modules) out of the box.
-
-All `.css` file extensions will use css-modules unless it has `.global.css`.
-
-If you need global styles, stylesheets with `.global.css` will not go through the
-css-modules loader. e.g. `app.global.css`
-
-If you want to import global css libraries (like `bootstrap`), you can just write the following code in `.global.css`:
-
-```css
-@import '~bootstrap/dist/css/bootstrap.css';
-```
-
-## SASS support
-
-If you want to use Sass in your app, you only need to import `.sass` files instead of `.css` once:
-
-```js
-import './app.global.scss';
-```
-
-## Static Type Checking
-
-This project comes with Flow support out of the box! You can annotate your code with types, [get Flow errors as ESLint errors](https://github.com/amilajack/eslint-plugin-flowtype-errors), and get [type errors during runtime](https://github.com/codemix/flow-runtime) during development. Types are completely optional.
-
-## Dispatching redux actions from main process
-
-See [#118](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/118) and [#108](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/108)
-
-## How to keep your project updated with the boilerplate
-
-If your application is a fork from this repo, you can add this repo to another git remote:
-
-```sh
-git remote add upstream https://github.com/electron-react-boilerplate/electron-react-boilerplate.git
-```
-
-Then, use git to merge some latest commits:
-
-```sh
-git pull upstream master
-```
-
 ## License
 
 MIT © [Electron React Boilerplate](https://github.com/electron-react-boilerplate)
