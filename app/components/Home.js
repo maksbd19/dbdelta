@@ -6,6 +6,7 @@ import { emit } from 'eiphop';
 import { isEmpty } from 'lodash';
 
 import Manager from '../driver';
+import Delta from './delta/Delta';
 
 export default class Home extends Component {
   constructor(props) {
@@ -16,12 +17,14 @@ export default class Home extends Component {
       target: { value: '', error: false },
       connections: [],
       progress: [],
-      res: {}
+      res: {},
+      accepted: {}
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleAlertClick = this.handleAlertClick.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleAction = this.handleAction.bind(this);
   }
 
   componentDidMount() {
@@ -81,11 +84,11 @@ export default class Home extends Component {
 
     const { connections, source, target } = this.state;
 
-    const source = connections.filter(i => i.id === source.value).pop();
+    const _source = connections.filter(i => i.id === source.value).pop();
 
-    const target = connections.filter(i => i.id === target.value).pop();
+    const _target = connections.filter(i => i.id === target.value).pop();
 
-    const manager = new Manager(source, target);
+    const manager = new Manager(_source, _target);
 
     const stateProgress = [];
 
@@ -107,6 +110,20 @@ export default class Home extends Component {
     manager.getDelta();
   }
 
+  handleAction(state, key, value) {
+    const { accepted } = this.state;
+
+    if (state) {
+      accepted[key] = value;
+    } else {
+      delete accepted[key];
+    }
+
+    this.setState({
+      accepted
+    });
+  }
+
   render() {
     const {
       connections,
@@ -114,7 +131,8 @@ export default class Home extends Component {
       progress,
       res,
       source,
-      target
+      target,
+      accepted
     } = this.state;
 
     const connectionOptions = connections.map(i => {
@@ -191,52 +209,85 @@ export default class Home extends Component {
         <div className="col-sm-12">
           <div className="card">
             <div className="card-title">
-              <h3 className="display-5 text-center mt-2">{title}</h3>
+              <h3 className="display-2 text-center mt-4 mb-0">{title}</h3>
             </div>
-            <div className="card-body">{body}</div>
+            <div className="card-body">
+              <div className="row display-flex">{body}</div>
+            </div>
           </div>
         </div>
       );
     };
 
     const getSchemaDifferenceCard = () => {
-      if (isEmpty(res) || !res.data || !res.data.schema) {
+      if (
+        isEmpty(res) ||
+        !res.data ||
+        !res.data.schema ||
+        !res.data.schema.length
+      ) {
         return '';
       }
 
       const schema = res.data.schema;
+      const tables = {};
+
+      for (let i = 0; i < schema.length; i++) {
+        const item = schema[i];
+
+        switch (item.type) {
+          case 'column':
+            const table = item.target[1];
+
+            if (typeof tables[table] === 'undefined') {
+              tables[table] = [];
+            }
+
+            tables[table].push(item);
+
+            break;
+          case 'table':
+            tables[item.target[1]] = [item];
+            break;
+        }
+      }
+
+      const tableArray = Object.values(tables);
 
       return getCard(
         'Schema',
-        <table className="table">
-          <tbody>
-            {schema.map((i, index) => (
-              <tr key={index}>
-                <td className="source-col-name">{i['column']}</td>
-                <td className="col-delta">
-                  <div className="source-col-value">{i['sourceVal']}</div>
-                  <div className="target-col-value">{i['targetVal']}</div>
-                </td>
-                <td className="col-action">
-                  <div className="accept-source">
-                    <i className="fa fa-check" />
-                  </div>
-                  <div className="accept-target">
-                    <i className="fa fa-check" />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        tableArray.map((table, index) => (
+          <Delta key={index} table={table} handleAction={this.handleAction} />
+        ))
       );
     };
 
     const getDataDifferenceCard = () => {
-      if (isEmpty(res) || !res.data || !res.data.data) {
+      if (
+        isEmpty(res) ||
+        !res.data ||
+        !res.data.data ||
+        !res.data.data.length
+      ) {
         return '';
       }
+
       return getCard('Data', JSON.stringify(res.data.data));
+    };
+
+    const getAcceptedMigration = () => {
+      const sql = Object.values(accepted)
+        .map(i => i.action)
+        .join('\n');
+
+      if (sql === '') {
+        return '';
+      }
+
+      return getCard(
+        'Generated SQL',
+        <div className="code-section">{sql}</div>
+      );
     };
 
     return (
@@ -304,6 +355,7 @@ export default class Home extends Component {
 
           {getSchemaDifferenceCard()}
           {getDataDifferenceCard()}
+          {getAcceptedMigration()}
         </div>
       </div>
     );
