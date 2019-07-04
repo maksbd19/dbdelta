@@ -20969,7 +20969,7 @@ input.datetimepicker[data-color="yellow"]+.bootstrap-datetimepicker-widget.dropd
   padding: 15px;
   border-radius: 8px;
   background: #050506;
-  color: #888888;
+  color: #888;
   font-size: 13px;
   font-family: monospace;
 }
@@ -20985,4 +20985,15 @@ input.datetimepicker[data-color="yellow"]+.bootstrap-datetimepicker-widget.dropd
 .row.display-flex > [class*='col-'] {
   display: flex;
   flex-direction: column;
+}
+
+.code-section code{
+  font-size: 13px;
+  line-height: 1.3rem;
+  color: #d2d2d2;
+  white-space: pre-wrap;
+}
+
+.code-section code span{
+  display: block;
 }

@@ -6,7 +6,12 @@ import { emit } from 'eiphop';
 import { isEmpty } from 'lodash';
 
 import Manager from '../driver';
-import Delta from './delta/Delta';
+import CardSchemaDifference from './delta/CardSchemaDifference';
+import CardDataDifference from './delta/CardDataDifference';
+import CardAcceptedMigration from './delta/CardAcceptedMigration';
+
+import Status from '../components/ui/Status';
+import Button from '../components/ui/Button';
 
 export default class Home extends Component {
   constructor(props) {
@@ -18,13 +23,16 @@ export default class Home extends Component {
       connections: [],
       progress: [],
       res: {},
-      accepted: {}
+      accepted: {},
+      saveResp: {}
     };
 
     this.handleChange = this.handleChange.bind(this);
-    this.handleAlertClick = this.handleAlertClick.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleAction = this.handleAction.bind(this);
+    this.handleActionSchema = this.handleActionSchema.bind(this);
+    this.handleSelectAllSchema = this.handleSelectAllSchema.bind(this);
+    this.handleSelectNoneSchema = this.handleSelectNoneSchema.bind(this);
+    this.handleGenerateSqlFile = this.handleGenerateSqlFile.bind(this);
   }
 
   componentDidMount() {
@@ -37,13 +45,6 @@ export default class Home extends Component {
       .catch(err => console.log(err));
   }
 
-  handleAlertClick() {
-    this.setState({
-      res: {},
-      progress: []
-    });
-  }
-
   async handleChange(key, value) {
     const stateObj = {};
 
@@ -51,8 +52,6 @@ export default class Home extends Component {
       value: value,
       error: value === ''
     };
-
-    stateObj.res = {};
 
     this.setState(stateObj);
   }
@@ -80,7 +79,12 @@ export default class Home extends Component {
       return;
     }
 
-    this.setState({ isSubmitting: 1, res: {}, progress: [] });
+    this.setState({
+      isSubmitting: 1,
+      res: {},
+      progress: [],
+      accepted: {}
+    });
 
     const { connections, source, target } = this.state;
 
@@ -110,7 +114,7 @@ export default class Home extends Component {
     manager.getDelta();
   }
 
-  handleAction(state, key, value) {
+  handleActionSchema(state, key, value) {
     const { accepted } = this.state;
 
     if (state) {
@@ -124,6 +128,64 @@ export default class Home extends Component {
     });
   }
 
+  handleSelectAllSchema() {
+    const accepted = {};
+
+    const { res } = this.state;
+
+    const schema =
+      !isEmpty(res) &&
+      typeof res.data !== 'undefined' &&
+      typeof res.data.schema !== 'undefined'
+        ? res.data.schema
+        : [];
+
+    Object.values(schema).forEach(i => {
+      accepted[i.target.join('.')] = i;
+    });
+
+    this.setState({
+      accepted
+    });
+  }
+  handleSelectNoneSchema() {
+    this.setState({
+      accepted: {}
+    });
+  }
+
+  handleSelectAllData() {}
+  handleSelectNoneData() {}
+
+  handleGenerateSqlFile() {
+    const { source, target, accepted, connections } = this.state;
+
+    const _source = connections.filter(i => i.id === source.value).pop();
+    const _target = connections.filter(i => i.id === target.value).pop();
+
+    const toSnakeCase = text =>
+      String(text)
+        .toLowerCase()
+        .split(' ')
+        .join('_');
+
+    const fileName =
+      [
+        toSnakeCase(_source.name),
+        toSnakeCase(_target.name),
+        new Date().getTime()
+      ].join('_') + '.sql';
+
+    emit('saveSqlFile', {
+      name: fileName,
+      data: accepted
+    })
+      .then(resp => this.setState({ saveResp: resp }))
+      .catch(e =>
+        this.setState({ saveResp: { success: false, message: e.message } })
+      );
+  }
+
   render() {
     const {
       connections,
@@ -132,7 +194,8 @@ export default class Home extends Component {
       res,
       source,
       target,
-      accepted
+      accepted,
+      saveResp
     } = this.state;
 
     const connectionOptions = connections.map(i => {
@@ -144,13 +207,6 @@ export default class Home extends Component {
 
     const getConnectionOption = value =>
       connectionOptions.filter(i => i.value === value).pop();
-
-    const getSpinner = () =>
-      isSubmitting ? (
-        <i className="tim-icons fas fa-circle-notch fa-spin" />
-      ) : (
-        ''
-      );
 
     const getFormGroupClass = prop =>
       ['form-group', this.state[prop].error ? 'has-danger' : ''].join(' ');
@@ -169,126 +225,21 @@ export default class Home extends Component {
       );
     };
 
-    const getStatus = () => {
-      if (isEmpty(res)) {
-        return '';
-      }
+    const deltaSchema =
+      !isEmpty(res) &&
+      typeof res.data !== 'undefined' &&
+      typeof res.data.schema !== 'undefined'
+        ? res.data.schema
+        : [];
 
-      const className = [
-        'alert',
-        'alert-' + (res.success ? 'success' : 'danger'),
-        'alert-with-icon'
-      ].join(' ');
+    const deltaData =
+      !isEmpty(res) &&
+      typeof res.data !== 'undefined' &&
+      typeof res.data.data !== 'undefined'
+        ? res.data.data
+        : [];
 
-      return (
-        <div className={className}>
-          <button
-            type="button"
-            aria-hidden="true"
-            className="close"
-            data-dismiss="alert"
-            aria-label="Close"
-            onClick={this.handleAlertClick}
-          >
-            <i className="fas fa-times" />
-          </button>
-          <span
-            data-notify="icon"
-            className={
-              'fas fa-' +
-              (res.success ? 'check-circle' : 'exclamation-triangle')
-            }
-          />
-          {res.msg}
-        </div>
-      );
-    };
-
-    const getCard = (title, body) => {
-      return (
-        <div className="col-sm-12">
-          <div className="card">
-            <div className="card-title">
-              <h3 className="display-2 text-center mt-4 mb-0">{title}</h3>
-            </div>
-            <div className="card-body">
-              <div className="row display-flex">{body}</div>
-            </div>
-          </div>
-        </div>
-      );
-    };
-
-    const getSchemaDifferenceCard = () => {
-      if (
-        isEmpty(res) ||
-        !res.data ||
-        !res.data.schema ||
-        !res.data.schema.length
-      ) {
-        return '';
-      }
-
-      const schema = res.data.schema;
-      const tables = {};
-
-      for (let i = 0; i < schema.length; i++) {
-        const item = schema[i];
-
-        switch (item.type) {
-          case 'column':
-            const table = item.target[1];
-
-            if (typeof tables[table] === 'undefined') {
-              tables[table] = [];
-            }
-
-            tables[table].push(item);
-
-            break;
-          case 'table':
-            tables[item.target[1]] = [item];
-            break;
-        }
-      }
-
-      const tableArray = Object.values(tables);
-
-      return getCard(
-        'Schema',
-        tableArray.map((table, index) => (
-          <Delta key={index} table={table} handleAction={this.handleAction} />
-        ))
-      );
-    };
-
-    const getDataDifferenceCard = () => {
-      if (
-        isEmpty(res) ||
-        !res.data ||
-        !res.data.data ||
-        !res.data.data.length
-      ) {
-        return '';
-      }
-
-      return getCard('Data', JSON.stringify(res.data.data));
-    };
-
-    const getAcceptedMigration = () => {
-      const sql = Object.values(accepted)
-        .map(i => i.action)
-        .join('\n');
-
-      if (sql === '') {
-        return '';
-      }
-
-      return getCard(
-        'Generated SQL',
-        <div className="code-section">{sql}</div>
-      );
-    };
+    const acceptedList = Object.keys(accepted);
 
     return (
       <div className="container-fluid">
@@ -335,27 +286,43 @@ export default class Home extends Component {
                   </div>
 
                   {getProgress()}
-                  {getStatus()}
+
+                  <Status data={res} />
 
                   <div className="btn-container text-center mb-4">
-                    <button
-                      type="button"
-                      className="btn btn-primary"
+                    <Button
+                      classes="btn-primary"
                       id="get-delta"
-                      onClick={this.handleSubmit}
-                    >
-                      {getSpinner()}
-                      Calculate Delta
-                    </button>
+                      text="Calculate Delta"
+                      spin={isSubmitting}
+                      handleClick={this.handleSubmit}
+                    />
                   </div>
                 </form>
               </div>
             </div>
           </div>
 
-          {getSchemaDifferenceCard()}
-          {getDataDifferenceCard()}
-          {getAcceptedMigration()}
+          <CardSchemaDifference
+            handleSelectAll={this.handleSelectAllSchema}
+            handleSelectNone={this.handleSelectNoneSchema}
+            handleAction={this.handleActionSchema}
+            accepted={acceptedList}
+            schema={deltaSchema}
+          />
+
+          <CardDataDifference
+            handleSelectAll={this.handleSelectAllData}
+            handleSelectNone={this.handleSelectNoneData}
+            handleAction={this.handleActionData}
+            data={deltaData}
+          />
+
+          <CardAcceptedMigration
+            items={accepted}
+            handleAction={this.handleGenerateSqlFile}
+            status={saveResp}
+          />
         </div>
       </div>
     );

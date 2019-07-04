@@ -476,10 +476,11 @@ function Connection(conn, key, opts) {
 
         const schema = data[0]['Create Table'];
 
-        const lines = schema
-          .split('\n')
-          .map(i => String(i).trim())
-          .join('');
+        const lines =
+          schema
+            .split('\n')
+            .map(i => String(i).trim())
+            .join(' ') + ';';
 
         return resolve(lines);
       })

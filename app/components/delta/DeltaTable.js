@@ -4,17 +4,24 @@ export default class DeltaTable extends Component {
   constructor(props) {
     super(props);
 
-    const { table, handleAction } = this.props;
-
+    const { table, handleAction, accepted } = this.props;
     this.state = {
       table,
       handleAction,
-      accepted: false,
+      accepted: accepted || false,
       open: false
     };
 
     this.handleAction = this.handleAction.bind(this);
     this.handleCollapse = this.handleCollapse.bind(this);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.accepted !== prevProps.accepted) {
+      this.setState({
+        accepted: this.props.accepted
+      });
+    }
   }
 
   handleAction() {

@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import electron from 'electron';
+import electron, { dialog, app, BrowserWindow } from 'electron';
 import { setupMainHandler } from 'eiphop';
 import shortid from 'shortid';
 import log from './lib/logger';
@@ -98,10 +98,63 @@ const deleteConnection = async (req, res) => {
   });
 };
 
+const saveSqlFile = async (req, res) => {
+  const { name, data } = req.payload;
+
+  const processAction = item => {
+    switch (item.type) {
+      case 'table':
+        let action = item.action;
+
+        const create = action.indexOf('CREATE TABLE') > -1;
+
+        if (create) {
+          action = action.replace(/` \( `/g, '` (\n  `');
+          action = action.replace(/, `/g, ',\n  `');
+          action = action.replace(/, PRIMARY/g, ',\n  PRIMARY');
+          action = action.replace(/\) ENGINE/g, '\n) ENGINE');
+        }
+
+        const comment = `-- ${
+          create ? 'Create new' : 'Drop'
+        } Table ${item.target.join('.')}`;
+
+        return [comment, action].join('\n');
+      default:
+        return '';
+    }
+  };
+
+  const sql = Object.values(data)
+    .map(i => processAction(i))
+    .join('\n\n');
+
+  const options = {
+    title: 'Save current page as a pdf',
+    defaultPath: app.getPath('documents') + '/' + name
+  };
+
+  dialog.showSaveDialog(BrowserWindow, options, path => {
+    fs.writeFile(path, sql, 'utf-8', err => {
+      if (err) {
+        res.send({
+          msg: e.message,
+          success: false
+        });
+      }
+      res.send({
+        msg: 'File saved successfully',
+        success: true
+      });
+    });
+  });
+};
+
 const ipcActions = {
   getConnections,
   saveConnection,
-  deleteConnection
+  deleteConnection,
+  saveSqlFile
 };
 
 export default function ipcHandlerSetup() {
