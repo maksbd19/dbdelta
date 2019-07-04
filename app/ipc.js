@@ -130,19 +130,19 @@ const saveSqlFile = async (req, res) => {
     .join('\n\n');
 
   const options = {
-    title: 'Save current page as a pdf',
+    title: 'Save sql file',
     defaultPath: app.getPath('documents') + '/' + name
   };
 
-  dialog.showSaveDialog(BrowserWindow, options, path => {
+  dialog.showSaveDialog(null, options, path => {
     fs.writeFile(path, sql, 'utf-8', err => {
       if (err) {
-        res.send({
+        return res.send({
           msg: e.message,
           success: false
         });
       }
-      res.send({
+      return res.send({
         msg: 'File saved successfully',
         success: true
       });
