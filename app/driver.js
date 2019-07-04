@@ -97,6 +97,8 @@ export default function Manager(source, target) {
     manager.closeConnections(msg => __ee.emit('progress', msg));
   }
 
+  manager.on('progress', _progress);
+
   /***
    * CalculateDiff
    *

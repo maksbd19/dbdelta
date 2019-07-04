@@ -15,6 +15,7 @@ import log from './logger';
 
 export default function(source, target) {
   const connections = {};
+  const _events = {};
 
   const sourceConfig = { ...source.config, key: 'source' };
   const targetConfig = { ...target.config, key: 'target' };
@@ -184,9 +185,9 @@ export default function(source, target) {
     const _diffs = [];
 
     if (commons.length > 0) {
-      console.log(
+      this.emit('progress', [
         `Found ${commons.length} common tables, comparing table schema`
-      );
+      ]);
 
       for (let i = 0; i < commons.length; i++) {
         const table = commons[i];
@@ -344,6 +345,25 @@ export default function(source, target) {
   function _getTableDropSchema(database, table) {
     return 'DROP TABLE `' + database + '`.`' + table + '`;';
   }
+
+  this.on = (type, callback) => {
+    if (!_events[type]) {
+      _events[type] = [];
+    }
+
+    _events[type].push(callback);
+  };
+
+  this.emit = (type, args) => {
+    if (!_events[type]) {
+      return;
+    }
+
+    for (let i = 0; i < _events[type].length; i++) {
+      const callback = _events[type][i];
+      callback(...args);
+    }
+  };
 }
 
 function Connection(conn, key, opts) {

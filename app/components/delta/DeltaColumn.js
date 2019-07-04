@@ -13,9 +13,10 @@ export default class DeltaColumn extends Component {
     this.handleAction = this.handleAction.bind(this);
   }
 
-  render() {
-    const { column } = this.state.column;
+  handleAction() {}
 
+  render() {
+    const { column } = this.state;
     return (
       <tr>
         <td className="source-col-name">{column['column']}</td>
