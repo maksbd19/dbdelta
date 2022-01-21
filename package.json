@@ -265,7 +265,7 @@
     "history": "^4.7.2",
     "jquery": "^3.4.1",
     "lodash": "^4.17.11",
-    "log4js": "^4.3.2",
+    "log4js": "^6.4.0",
     "mysql2": "^1.6.5",
     "react": "^16.6.3",
     "react-bootstrap": "^1.0.0-beta.9",
